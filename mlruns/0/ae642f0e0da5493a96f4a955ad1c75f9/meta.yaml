@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/Yashar/End-to-end-ML-Project-with-MLflow/mlruns/0/ae642f0e0da5493a96f4a955ad1c75f9/artifacts
+end_time: 1750344193907
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: ae642f0e0da5493a96f4a955ad1c75f9
+run_name: casual-bass-635
+run_uuid: ae642f0e0da5493a96f4a955ad1c75f9
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1750344182309
+status: 3
+tags: []
+user_id: Yashar
