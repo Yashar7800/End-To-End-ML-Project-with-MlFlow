@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/Yashar/End-to-end-ML-Project-with-MLflow/mlruns/0/6a349ed121364488a92181c9bf341aa3/artifacts
+end_time: 1750332101441
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 6a349ed121364488a92181c9bf341aa3
+run_name: indecisive-wolf-663
+run_uuid: 6a349ed121364488a92181c9bf341aa3
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1750332090675
+status: 3
+tags: []
+user_id: Yashar

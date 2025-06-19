@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/Yashar/End-to-end-ML-Project-with-MLflow/mlruns/0/fb5c8c5a339348d6949747e08ad09541/artifacts
+end_time: 1750332328376
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: fb5c8c5a339348d6949747e08ad09541
+run_name: bald-shrike-160
+run_uuid: fb5c8c5a339348d6949747e08ad09541
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1750332318525
+status: 3
+tags: []
+user_id: Yashar
