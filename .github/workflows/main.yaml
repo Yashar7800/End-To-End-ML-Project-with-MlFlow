@@ -8,7 +8,7 @@ on:
       - 'README.md'
 
 permissions:
-  id-token: write # Required for OIDC (if you choose to implement later)
+  id-token: write # Required for OpenID Connect (OIDC) for more secure AWS authentication (recommended for future)
   contents: read
 
 jobs:
@@ -17,22 +17,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4 # Updated to v4
+        uses: actions/checkout@v4 # Updated to v4 for latest features and security
 
       - name: Lint code
-        run: echo "Linting repository" # Replace with actual linting command if available
+        run: echo "Linting repository" # Placeholder: Replace with actual linting command (e.g., pylint, flake8)
 
       - name: Run unit tests
-        run: echo "Running unit tests" # Replace with actual unit test command if available
+        run: echo "Running unit tests" # Placeholder: Replace with actual unit test command (e.g., pytest)
 
   build-and-push-ecr-image:
     name: Continuous Delivery - Build & Push
-    needs: integration # This job depends on 'integration'
+    needs: integration # This job depends on the 'integration' job to succeed first
     runs-on: ubuntu-latest
     outputs:
-      # Define outputs to pass to subsequent jobs
+      # Define outputs that this job will provide to subsequent jobs.
+      # 'image' will contain the full ECR URI with tag.
+      # 'registry' will contain just the ECR registry part.
       image: ${{ steps.build-image.outputs.image }}
-      registry: ${{ steps.login-ecr.outputs.registry }} # Output the ECR registry URI
+      registry: ${{ steps.login-ecr.outputs.registry }}
 
     steps:
       - name: Checkout Code
@@ -41,39 +43,42 @@ jobs:
       - name: Install Utilities
         run: |
           sudo apt-get update
-          sudo apt-get install -y jq unzip # Install necessary utilities
+          sudo apt-get install -y jq unzip # Install necessary utilities like 'jq' for AWS CLI parsing if needed
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4 # Updated to v4
+        uses: aws-actions/configure-aws-credentials@v4 # Updated to v4 for better security and Node.js version support
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }} # Ensure this secret is set to 'eu-central-1'
+          aws-region: ${{ secrets.AWS_REGION }} # This should be 'eu-north-1' as per your ECR repository location
 
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2 # Updated to v2
+        uses: aws-actions/amazon-ecr-login@v2 # Updated to v2 for improved security (e.g., password masking)
 
       - name: Build, tag, and push image to Amazon ECR
-        id: build-image # This step's ID is used for outputs
+        id: build-image # This ID is crucial for referencing this step's outputs
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
-          IMAGE_TAG: ${{ github.sha }} # Using commit SHA for unique image tagging
-          # If you prefer 'latest', change IMAGE_TAG to: IMAGE_TAG: latest
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }} # Ensure this secret holds the exact ECR repository name
+          IMAGE_TAG: ${{ github.sha }} # Using Git commit SHA for unique and traceable image tags
+          # If you prefer a simpler 'latest' tag, uncomment the line below and comment out the one above:
+          # IMAGE_TAG: latest
         run: |
-          # Build a docker container and push it to ECR
+          # Build the Docker container from your project's Dockerfile (assuming it's in the root)
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          
+          # Push the built Docker image to your ECR repository
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           
-          # Set output for image name using the new syntax
+          # Set the full image URI as a step output using the new syntax (fixes deprecated set-output warning)
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
   Continuous-Deployment:
     name: Continuous Delivery - Deploy
-    needs: build-and-push-ecr-image # This job depends on 'build-and-push-ecr-image'
-    runs-on: self-hosted # Assuming you have a self-hosted runner configured
-    
+    needs: build-and-push-ecr-image # This job explicitly depends on 'build-and-push-ecr-image' to get its outputs
+    runs-on: self-hosted # This job will run on your self-hosted runner
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4 # Updated to v4
@@ -83,34 +88,43 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }} # Ensure consistency with the build job
+          aws-region: ${{ secrets.AWS_REGION }} # Ensure consistency with the build job's region
 
       - name: Login to Amazon ECR
-        id: login-ecr # This re-logs in for the self-hosted runner, good for robustness
+        id: login-ecr # This re-logs into ECR on the self-hosted runner, useful for robustness
         uses: aws-actions/amazon-ecr-login@v2 # Updated to v2
       
-      - name: Pull latest images from ECR
+      - name: Pull latest image from ECR
         run: |
-          # Use the image output from the previous job
+          # Pull the Docker image using the full image URI passed from the previous job's output
+          # This specifically addresses the "docker pull requires 1 argument" error
           docker pull ${{ needs.build-and-push-ecr-image.outputs.image }}
+          echo "Successfully pulled image: ${{ needs.build-and-push-ecr-image.outputs.image }}"
           
       - name: Stop and remove container if running
         run: |
-          # This ensures a clean restart of the container
+          # Check if a container named 'mlproj' is already running. If so, stop and remove it.
           if docker ps -q --filter "name=mlproj" | grep -q .; then
             echo "Stopping and removing existing 'mlproj' container..."
             docker stop mlproj
             docker rm -fv mlproj
           else
-            echo "No existing 'mlproj' container found."
+            echo "No existing 'mlproj' container found. Proceeding."
           fi
         
       - name: Run Docker Image to serve users
         run: |
-          # Run the new container
+          # Run the new Docker container. Ensure exposed port (8080) matches your application's port.
+          # Environment variables for AWS credentials are passed for application access if needed.
           docker run -d -p 8080:8080 --name=mlproj \
             -e 'AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}' \
             -e 'AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}' \
             -e 'AWS_REGION=${{ secrets.AWS_REGION }}' \
-            ${{ needs.build-and-push-ecr-image.outputs.image }} # Use the image output from the previous job
-          echo "Container 'mlproj' started on port 8080
+            ${{ needs.build-and-push-ecr-image.outputs.image }} # Use the full image URI from the previous job
+          echo "Container 'mlproj' started on port 8080. Check 'docker ps' for status."
+
+      - name: Clean previous images and containers
+        run: |
+          # Prune unused Docker objects (images, containers, volumes, networks) to free up space
+          docker system prune -f --volumes # Added --volumes to prune volumes as well
+          echo "Docker system pruned."
