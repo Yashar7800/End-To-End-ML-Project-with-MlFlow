@@ -73,6 +73,11 @@ jobs:
           
           # Set the full image URI as a step output using the new syntax (fixes deprecated set-output warning)
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+          
+          # --- DEBUGGING LINES: Verify output is set ---
+          echo "DEBUG: Image output set to: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          echo "DEBUG: GITHUB_OUTPUT content after setting image:"
+          cat $GITHUB_OUTPUT # This will show what's written to the output file
 
   Continuous-Deployment:
     name: Continuous Delivery - Deploy
@@ -96,6 +101,9 @@ jobs:
       
       - name: Pull latest image from ECR
         run: |
+          # --- DEBUGGING LINE: Verify input from previous job ---
+          echo "DEBUG: Attempting to pull image: ${{ needs.build-and-push-ecr-image.outputs.image }}"
+          
           # Pull the Docker image using the full image URI passed from the previous job's output
           # This specifically addresses the "docker pull requires 1 argument" error
           docker pull ${{ needs.build-and-push-ecr-image.outputs.image }}
