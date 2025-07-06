@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/Yashar/End-to-end-ML-Project-with-MLflow/mlruns/0/11f60ed2be164f59aa559642d0da2cf7/artifacts
+end_time: 1751195727681
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 11f60ed2be164f59aa559642d0da2cf7
+run_name: able-conch-629
+run_uuid: 11f60ed2be164f59aa559642d0da2cf7
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1751195714024
+status: 3
+tags: []
+user_id: Yashar

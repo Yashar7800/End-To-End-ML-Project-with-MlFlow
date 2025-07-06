@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/Yashar/End-to-end-ML-Project-with-MLflow/mlruns/0/1accd19f48c1482ab23d1c26034ff02a/artifacts
+end_time: 1751812428940
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 1accd19f48c1482ab23d1c26034ff02a
+run_name: abundant-donkey-478
+run_uuid: 1accd19f48c1482ab23d1c26034ff02a
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1751812416218
+status: 3
+tags: []
+user_id: Yashar

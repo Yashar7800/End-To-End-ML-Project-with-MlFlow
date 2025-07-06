@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/Yashar/End-to-end-ML-Project-with-MLflow/mlruns/0/22a40b50b7404cd1af7ca8601999c78f/artifacts
+end_time: 1751286860435
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 22a40b50b7404cd1af7ca8601999c78f
+run_name: glamorous-asp-636
+run_uuid: 22a40b50b7404cd1af7ca8601999c78f
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1751286852023
+status: 3
+tags: []
+user_id: Yashar
