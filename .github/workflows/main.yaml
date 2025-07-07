@@ -78,12 +78,7 @@ jobs:
     name: Continuous Delivery - Deploy
     needs: build-and-push-ecr-image # Keep this dependency for job order
     runs-on: self-hosted
-    env: # Define these environment variables once at the job level
-      ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }} # This gets populated by the Login to Amazon ECR step in this job
-      ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
-      IMAGE_TAG: ${{ github.sha }} # Ensure this matches the tag used in the build job
-      # If you switched to 'latest' tag in build job, uncomment below and comment out above:
-      # IMAGE_TAG: latest
+    # REMOVE THE JOB-LEVEL 'env:' BLOCK HERE!
 
     steps:
       - name: Checkout Code
@@ -101,8 +96,14 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
       
       - name: Pull latest image from ECR
+        env: # Define env vars here, within the step's scope
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }} # This will now be evaluated correctly after 'login-ecr' runs
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
+          IMAGE_TAG: ${{ github.sha }} # Ensure this matches the tag used in the build job
+          # If you switched to 'latest' tag in build job, uncomment below and comment out above:
+          # IMAGE_TAG: latest
         run: |
-          # Use the environment variables defined at the job level to construct the full image URI
+          # Use the environment variables defined at this step level to construct the full image URI
           FULL_IMAGE_URI="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
           echo "DEBUG: Attempting to pull image: $FULL_IMAGE_URI"
           docker pull "$FULL_IMAGE_URI"
@@ -120,9 +121,15 @@ jobs:
           fi
         
       - name: Run Docker Image to serve users
+        env: # Define env vars here again, within this step's scope
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }} # This will also be evaluated correctly
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
+          IMAGE_TAG: ${{ github.sha }} # Ensure this matches the tag used in the build job
+          # If you switched to 'latest' tag in build job, uncomment below and comment out above:
+          # IMAGE_TAG: latest
         run: |
-          # Use the environment variables defined at the job level to construct the full image URI
-          FULL_IMAGE_URI="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" # Reconstruct here for clarity
+          # Use the environment variables defined at this step level to construct the full image URI
+          FULL_IMAGE_URI="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
           # Run the new Docker container. Ensure exposed port (8080) matches your application's port.
           # Environment variables for AWS credentials are passed for application access if needed.
           docker run -d -p 8080:8080 --name=mlproj \
